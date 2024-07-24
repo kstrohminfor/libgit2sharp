@@ -1,11 +1,8 @@
 ﻿using LibGit2Sharp.Core;
-using LibGit2Sharp.Core.Handles;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace LibGit2Sharp
 {
