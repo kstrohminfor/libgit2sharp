@@ -8,7 +8,7 @@
     <Company>LibGit2Sharp contributors</Company>
     <Copyright>Copyright © LibGit2Sharp contributors</Copyright>
     <PackageTags>libgit2 git</PackageTags>
-    <PackageProjectUrl>https://github.com/libgit2/libgit2sharp/</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/kstrohminfor/libgit2sharp/</PackageProjectUrl>
     <Authors>LibGit2Sharp contributors</Authors>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -49,7 +49,7 @@
 
   <Target Name="SetNuspecProperties" BeforeTargets="GenerateNuspec">
     <PropertyGroup>
-      <PackageReleaseNotes>https://github.com/libgit2/libgit2sharp/blob/$(SourceRevisionId)/CHANGES.md</PackageReleaseNotes>
+      <PackageReleaseNotes>https://github.com/kstrohminfor/libgit2sharp/blob/$(SourceRevisionId)/CHANGES.md</PackageReleaseNotes>
     </PropertyGroup>
   </Target>
 
