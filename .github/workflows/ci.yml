@@ -38,13 +38,9 @@ jobs:
     strategy:
       matrix:
         arch: [ x64 ]
-        os: [ windows-2019, windows-2022, macos-11, macos-12, macos-13 ]
+        os: [ windows-2019, windows-2022, macos-12, macos-13 ]
         tfm: [ net472, net6.0, net8.0 ]
         exclude:
-          - os: macos-11
-            tfm: net472
-          - os: macos-11
-            tfm: net8.0
           - os: macos-12
             tfm: net472
           - os: macos-13
@@ -113,4 +109,3 @@ jobs:
             git_command="git config --global --add safe.directory /app"
             test_command="dotnet test LibGit2Sharp.sln --configuration Release -p:TargetFrameworks=${{ matrix.tfm }} --logger "GitHubActions" -p:ExtraDefine=LEAKS_IDENTIFYING"
             docker run -t --rm --platform linux/${{ matrix.arch }} -v "$PWD:/app" gittools/build-images:${{ matrix.distro }}-sdk-${{ matrix.sdk }} sh -c "$git_command && $test_command"
-
