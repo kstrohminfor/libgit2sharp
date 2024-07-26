@@ -1,7 +1,6 @@
 ﻿using LibGit2Sharp.Core;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Runtime.InteropServices;
 
 namespace LibGit2Sharp
@@ -31,13 +30,13 @@ namespace LibGit2Sharp
         /// <summary>
         /// Checks to see if a reference exists.
         /// </summary>
-        public abstract bool Exists(string refName);
+        public abstract bool Exists(string referenceName);
 
         /// <summary>
         /// Attempts to look up a reference.
         /// </summary>
         /// <returns>False if the reference doesn't exist.</returns>
-        public abstract bool Lookup(string refName, out ReferenceData data);
+        public abstract bool Lookup(string referenceName, out ReferenceData data);
 
         /// <summary>
         /// Iterates all references (if glob is null) or only references matching glob (if not null.)
@@ -113,7 +112,7 @@ namespace LibGit2Sharp
         /// <summary>
         /// Frees the backend pointer, if one has been allocated.
         /// </summary>
-        internal void Free()
+        private void Free()
         {
             if (IntPtr.Zero == nativePointer)
             {
@@ -126,319 +125,9 @@ namespace LibGit2Sharp
         }
 
         /// <summary>
-        /// Backend's representation of a reference.
-        /// </summary>
-        public sealed class ReferenceData
-        {
-            /// <summary>
-            /// Reference name.
-            /// </summary>
-            public string RefName { get; private set; }
-
-            /// <summary>
-            /// True if symbolic; otherwise, false.
-            /// </summary>
-            public bool IsSymbolic { get; private set; }
-
-            /// <summary>
-            /// Object ID, if the ref isn't symbolic.
-            /// </summary>
-            public ObjectId ObjectId { get; private set; }
-
-            /// <summary>
-            /// Target name, if the ref is symbolic.
-            /// </summary>
-            public string SymbolicTarget { get; private set; }
-
-            /// <summary>
-            /// Initializes a direct reference.
-            /// </summary>
-            public ReferenceData(string refName, ObjectId directTarget)
-            {
-                this.RefName = refName;
-                this.IsSymbolic = false;
-                this.ObjectId = directTarget;
-                this.SymbolicTarget = null;
-            }
-
-            /// <summary>
-            /// Initializes a symbolic reference.
-            /// </summary>
-            public ReferenceData(string refName, string symbolicTarget)
-            {
-                this.RefName = refName;
-                this.IsSymbolic = true;
-                this.ObjectId = null;
-                this.SymbolicTarget = symbolicTarget;
-            }
-
-            /// <inheritdoc />
-            public override bool Equals(object obj)
-            {
-                var other = obj as ReferenceData;
-                if (other == null)
-                {
-                    return false;
-                }
-
-                return other.RefName == this.RefName
-                    && other.IsSymbolic == this.IsSymbolic
-                    && other.ObjectId == this.ObjectId
-                    && other.SymbolicTarget == this.SymbolicTarget;
-            }
-
-            /// <inheritdoc />
-            public override int GetHashCode()
-            {
-                unchecked
-                {
-                    var accumulator = this.RefName.GetHashCode();
-                    accumulator = accumulator * 17 + this.IsSymbolic.GetHashCode();
-                    if (this.ObjectId != null)
-                    {
-                        accumulator = accumulator * 17 + this.ObjectId.GetHashCode();
-                    }
-
-                    if (this.SymbolicTarget != null)
-                    {
-                        accumulator = accumulator * 17 + this.SymbolicTarget.GetHashCode();
-                    }
-
-                    return accumulator;
-                }
-            }
-
-            /// <summary>
-            /// Allocates a native git_reference for the <see cref="ReferenceData"/> and returns a pointer.
-            /// </summary>
-            internal IntPtr MarshalToPtr()
-            {
-                if (IsSymbolic)
-                {
-                    return Proxy.git_reference__alloc_symbolic(RefName, SymbolicTarget);
-                }
-                else
-                {
-                    return Proxy.git_reference__alloc(RefName, ObjectId.Oid);
-                }
-            }
-
-            /// <summary>
-            /// Marshals a git_reference into a managed <see cref="ReferenceData"/>
-            /// </summary>
-            internal static unsafe ReferenceData MarshalFromPtr(git_reference* ptr)
-            {
-                var name = Proxy.git_reference_name(ptr);
-                var type = Proxy.git_reference_type(ptr);
-                switch (type)
-                {
-                    case GitReferenceType.Oid:
-                        var targetOid = Proxy.git_reference_target(ptr);
-                        return new ReferenceData(name, targetOid);
-                    case GitReferenceType.Symbolic:
-                        var targetName = Proxy.git_reference_symbolic_target(ptr);
-                        return new ReferenceData(name, targetName);
-                    default:
-                        throw new LibGit2SharpException(
-                            string.Format(
-                                CultureInfo.InvariantCulture,
-                                "Unable to build a new reference from type '{0}'",
-                                type));
-                }
-            }
-        }
-
-        /// <summary>
-        /// Exception types that can be thrown from the backend.
-        /// Exceptions of this type will be converted to libgit2 error codes.
-        /// </summary>
-        public sealed class RefdbBackendException : LibGit2SharpException
-        {
-            private RefdbBackendException(GitErrorCode code, string message)
-                : base(message, code, GitErrorCategory.Reference)
-            {
-                Code = code;
-            }
-
-            /// <summary>
-            /// Git error code to return on exception.
-            /// </summary>
-            internal GitErrorCode Code { get; private set; }
-
-            /// <summary>
-            /// Reference was not found.
-            /// </summary>
-            public static RefdbBackendException NotFound(string refName)
-            {
-                return new RefdbBackendException(GitErrorCode.NotFound, string.Format("could not resolve reference '{0}'", refName));
-            }
-
-            /// <summary>
-            /// Reference by this name already exists.
-            /// </summary>
-            public static RefdbBackendException Exists(string refName)
-            {
-                return new RefdbBackendException(GitErrorCode.Exists, string.Format("will not overwrite reference '{0}' without match or force", refName));
-            }
-
-            /// <summary>
-            /// Conflict between an expected reference value and the reference's actual value.
-            /// </summary>
-            public static RefdbBackendException Conflict(string refName)
-            {
-                return new RefdbBackendException(GitErrorCode.Conflict, string.Format("conflict occurred while writing reference '{0}'", refName));
-            }
-
-            /// <summary>
-            /// User is not allowed to alter this reference.
-            /// </summary>
-            /// <param name="message">Arbitrary message.</param>
-            public static RefdbBackendException NotAllowed(string message)
-            {
-                return new RefdbBackendException(GitErrorCode.Auth, message);
-            }
-
-            /// <summary>
-            /// Operation is not implemented.
-            /// </summary>
-            /// <param name="operation">Operation that's not implemented.</param>
-            public static RefdbBackendException NotImplemented(string operation)
-            {
-                return new RefdbBackendException(GitErrorCode.User, string.Format("operation '{0}' is unsupported by this refdb backend.", operation));
-            }
-
-            /// <summary>
-            /// Transform an exception into an error code and message, which is logged.
-            /// </summary>
-            internal static int GetCode(Exception ex)
-            {
-                Proxy.git_error_set_str(GitErrorCategory.Reference, ex);
-                var backendException = ex as RefdbBackendException;
-                if (backendException == null)
-                {
-                    return (int)GitErrorCode.Error;
-                }
-
-                return (int)backendException.Code;
-            }
-        }
-
-        /// <summary>
-        /// Wrapper to hold the state of the enumerator.
-        /// </summary>
-        private class RefIterator
-        {
-            private readonly IEnumerator<ReferenceData> enumerator;
-
-            public RefIterator(IEnumerator<ReferenceData> enumerator)
-            {
-                this.enumerator = enumerator;
-            }
-
-            public ReferenceData GetNext()
-            {
-                if (this.enumerator.MoveNext())
-                {
-                    return this.enumerator.Current;
-                }
-
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Static entrypoints that trampoline into the iterator.
-        /// </summary>
-        private unsafe static class IteratorEntryPoints
-        {
-            public static readonly GitRefdbIterator.next_callback NextCallback = Next;
-            public static readonly GitRefdbIterator.next_name_callback NextNameCallback = NextName;
-            public static readonly GitRefdbIterator.free_callback FreeCallback = Free;
-
-            public static int Next(
-                out IntPtr referencePtr,
-                IntPtr iterator)
-            {
-                referencePtr = IntPtr.Zero;
-                var backend = PtrToBackend(iterator);
-                if (backend == null)
-                {
-                    return (int)GitErrorCode.Error;
-                }
-
-                ReferenceData data;
-                try
-                {
-                    data = backend.GetNext();
-                }
-                catch (Exception ex)
-                {
-                    return RefdbBackendException.GetCode(ex);
-                }
-
-                if (data == null)
-                {
-                    return (int)GitErrorCode.IterOver;
-                }
-
-                referencePtr = data.MarshalToPtr();
-                return (int)GitErrorCode.Ok;
-            }
-
-            public static int NextName(
-                out string refNamePtr,
-                IntPtr iterator)
-            {
-                refNamePtr = null;
-                var backend = PtrToBackend(iterator);
-                if (backend == null)
-                {
-                    return (int)GitErrorCode.Error;
-                }
-
-                ReferenceData data;
-                try
-                {
-                    data = backend.GetNext();
-                }
-                catch (Exception ex)
-                {
-                    return RefdbBackendException.GetCode(ex);
-                }
-
-                if (data == null)
-                {
-                    return (int)GitErrorCode.IterOver;
-                }
-
-                refNamePtr = data.RefName;
-                return (int)GitErrorCode.Ok;
-            }
-
-            public static void Free(IntPtr iterator)
-            {
-                GCHandle.FromIntPtr(Marshal.ReadIntPtr(iterator, GitRefdbIterator.GCHandleOffset)).Free();
-                Marshal.FreeHGlobal(iterator);
-            }
-
-            private static RefIterator PtrToBackend(IntPtr pointer)
-            {
-                var intPtr = Marshal.ReadIntPtr(pointer, GitRefdbIterator.GCHandleOffset);
-                var backend = GCHandle.FromIntPtr(intPtr).Target as RefIterator;
-
-                if (backend == null)
-                {
-                    Proxy.git_error_set_str(GitErrorCategory.Reference, "Cannot retrieve the managed RefIterator");
-                }
-
-                return backend;
-            }
-        }
-
-        /// <summary>
         /// Static entry points that trampoline into the custom backend's implementation.
         /// </summary>
-        private unsafe static class BackendEntryPoints
+        private static unsafe class BackendEntryPoints
         {
             public static readonly GitRefdbBackend.exists_callback ExistsCallback = Exists;
             public static readonly GitRefdbBackend.lookup_callback LookupCallback = Lookup;
@@ -519,28 +208,18 @@ namespace LibGit2Sharp
                     return (int)GitErrorCode.Error;
                 }
 
-                RefIterator iterator;
+                RefdbIterator iterator;
                 try
                 {
                     var enumerator = backend.Iterate(glob).GetEnumerator();
-                    iterator = new RefIterator(enumerator);
+                    iterator = new RefdbIterator(enumerator);
                 }
                 catch (Exception ex)
                 {
                     return RefdbBackendException.GetCode(ex);
                 }
 
-                var nativeIterator = new GitRefdbIterator()
-                {
-                    Refdb = backendPtr,
-                    Next = IteratorEntryPoints.Next,
-                    NextName = IteratorEntryPoints.NextName,
-                    Free = IteratorEntryPoints.Free,
-                    GCHandle = GCHandle.ToIntPtr(GCHandle.Alloc(iterator))
-                };
-
-                iteratorPtr = Marshal.AllocHGlobal(Marshal.SizeOf(nativeIterator));
-                Marshal.StructureToPtr(nativeIterator, iteratorPtr, false);
+                iteratorPtr = iterator.RefdbIteratorPtr;
                 return (int)GitErrorCode.Ok;
             }
 

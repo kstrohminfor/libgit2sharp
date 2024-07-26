@@ -17,7 +17,7 @@ namespace LibGit2Sharp.Tests
                 var backend = new MockRefdbBackend(repo);
                 repo.Refs.SetBackend(backend);
                 repo.Refs.Add("refs/heads/newref", new ObjectId("be3563ae3f795b2b4353bcce3a527ad0a4f7f644"), true);
-                Assert.Equal(backend.Refs["refs/heads/newref"], new RefdbBackend.ReferenceData("refs/heads/newref", new ObjectId("be3563ae3f795b2b4353bcce3a527ad0a4f7f644")));
+                Assert.Equal(backend.Refs["refs/heads/newref"], new ReferenceData("refs/heads/newref", new ObjectId("be3563ae3f795b2b4353bcce3a527ad0a4f7f644")));
             }
         }
 
@@ -29,8 +29,8 @@ namespace LibGit2Sharp.Tests
             {
                 var backend = new MockRefdbBackend(repo);
                 repo.Refs.SetBackend(backend);
-                backend.Refs["HEAD"] = new RefdbBackend.ReferenceData("HEAD", "refs/heads/testref");
-                backend.Refs["refs/heads/testref"] = new RefdbBackend.ReferenceData("refs/heads/testref", new ObjectId("be3563ae3f795b2b4353bcce3a527ad0a4f7f644"));
+                backend.Refs["HEAD"] = new ReferenceData("HEAD", "refs/heads/testref");
+                backend.Refs["refs/heads/testref"] = new ReferenceData("refs/heads/testref", new ObjectId("be3563ae3f795b2b4353bcce3a527ad0a4f7f644"));
 
                 Assert.Equal("refs/heads/testref", repo.Refs["HEAD"].TargetIdentifier);
                 Assert.Equal("be3563ae3f795b2b4353bcce3a527ad0a4f7f644", repo.Refs["HEAD"].ResolveToDirectReference().TargetIdentifier);
@@ -46,8 +46,8 @@ namespace LibGit2Sharp.Tests
             {
                 var backend = new MockRefdbBackend(repo);
                 repo.Refs.SetBackend(backend);
-                backend.Refs["HEAD"] = new RefdbBackend.ReferenceData("HEAD", "refs/heads/testref");
-                backend.Refs["refs/heads/testref"] = new RefdbBackend.ReferenceData("refs/heads/testref", new ObjectId("be3563ae3f795b2b4353bcce3a527ad0a4f7f644"));
+                backend.Refs["HEAD"] = new ReferenceData("HEAD", "refs/heads/testref");
+                backend.Refs["refs/heads/testref"] = new ReferenceData("refs/heads/testref", new ObjectId("be3563ae3f795b2b4353bcce3a527ad0a4f7f644"));
 
                 repo.Refs.Remove("refs/heads/testref");
 
@@ -82,9 +82,9 @@ namespace LibGit2Sharp.Tests
                 var backend = new MockRefdbBackend(repo);
                 repo.Refs.SetBackend(backend);
 
-                backend.Refs["HEAD"] = new RefdbBackend.ReferenceData("HEAD", "refs/heads/testref");
-                backend.Refs["refs/heads/testref"] = new RefdbBackend.ReferenceData("refs/heads/testref", new ObjectId("be3563ae3f795b2b4353bcce3a527ad0a4f7f644"));
-                backend.Refs["refs/heads/othersymbolic"] = new RefdbBackend.ReferenceData("refs/heads/othersymbolic", "refs/heads/testref");
+                backend.Refs["HEAD"] = new ReferenceData("HEAD", "refs/heads/testref");
+                backend.Refs["refs/heads/testref"] = new ReferenceData("refs/heads/testref", new ObjectId("be3563ae3f795b2b4353bcce3a527ad0a4f7f644"));
+                backend.Refs["refs/heads/othersymbolic"] = new ReferenceData("refs/heads/othersymbolic", "refs/heads/testref");
 
                 Assert.True(repo.Refs.Select(r => r.CanonicalName).SequenceEqual(backend.Refs.Keys));
             }
@@ -103,11 +103,11 @@ namespace LibGit2Sharp.Tests
                 // If libgit2 can't resolve any tag to an OID, then git_tag_list silently fails and returns zero tags.
                 // This test previously used broken refs to test type filtering, but refdb is no longer responsible for type filtering.
                 // The old test code is commented below:
-                // backend.Refs["refs/tags/broken1"] = new RefdbBackend.ReferenceData("refs/tags/broken1", "tags/shouldnt/be/symbolic");
-                // backend.Refs["refs/tags/broken2"] = new RefdbBackend.ReferenceData("refs/tags/broken2", "but/are/here/for/testing");
-                // backend.Refs["refs/tags/broken3"] = new RefdbBackend.ReferenceData("refs/tags/broken3", "the/type/filtering");
+                // backend.Refs["refs/tags/broken1"] = new ReferenceData("refs/tags/broken1", "tags/shouldnt/be/symbolic");
+                // backend.Refs["refs/tags/broken2"] = new ReferenceData("refs/tags/broken2", "but/are/here/for/testing");
+                // backend.Refs["refs/tags/broken3"] = new ReferenceData("refs/tags/broken3", "the/type/filtering");
 
-                backend.Refs["refs/tags/correct1"] = new RefdbBackend.ReferenceData("refs/tags/correct1", new ObjectId("be3563ae3f795b2b4353bcce3a527ad0a4f7f644"));
+                backend.Refs["refs/tags/correct1"] = new ReferenceData("refs/tags/correct1", new ObjectId("be3563ae3f795b2b4353bcce3a527ad0a4f7f644"));
 
                 var tagNames = repo.Tags.Select(r => r.CanonicalName);
                 Assert.True(tagNames.SequenceEqual(new List<string> { "refs/tags/correct1" }));
@@ -123,9 +123,9 @@ namespace LibGit2Sharp.Tests
                 var backend = new MockRefdbBackend(repo);
                 repo.Refs.SetBackend(backend);
 
-                backend.Refs["HEAD"] = new RefdbBackend.ReferenceData("HEAD", "refs/heads/testref");
-                backend.Refs["refs/heads/testref"] = new RefdbBackend.ReferenceData("refs/heads/testref", new ObjectId("be3563ae3f795b2b4353bcce3a527ad0a4f7f644"));
-                backend.Refs["refs/heads/othersymbolic"] = new RefdbBackend.ReferenceData("refs/heads/othersymbolic", "refs/heads/testref");
+                backend.Refs["HEAD"] = new ReferenceData("HEAD", "refs/heads/testref");
+                backend.Refs["refs/heads/testref"] = new ReferenceData("refs/heads/testref", new ObjectId("be3563ae3f795b2b4353bcce3a527ad0a4f7f644"));
+                backend.Refs["refs/heads/othersymbolic"] = new ReferenceData("refs/heads/othersymbolic", "refs/heads/testref");
 
                 Assert.True(repo.Refs.FromGlob("refs/heads/*").Select(r => r.CanonicalName).SequenceEqual(new List<string>() { "refs/heads/othersymbolic", "refs/heads/testref" }));
                 Assert.True(repo.Refs.FromGlob("refs/heads/?estref").Select(r => r.CanonicalName).SequenceEqual(new List<string>() { "refs/heads/testref" }));
@@ -140,7 +140,7 @@ namespace LibGit2Sharp.Tests
             {
                 var backend = new MockRefdbBackend(repo);
                 repo.Refs.SetBackend(backend);
-                backend.Refs["refs/tags/test"] = new RefdbBackend.ReferenceData("refs/tags/test", new ObjectId("be3563ae3f795b2b4353bcce3a527ad0a4f7f644"));
+                backend.Refs["refs/tags/test"] = new ReferenceData("refs/tags/test", new ObjectId("be3563ae3f795b2b4353bcce3a527ad0a4f7f644"));
                 const string newName = "refs/tags/test/deep";
 
                 var renamed = repo.Refs.Rename("refs/tags/test", newName);

@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace LibGit2Sharp.Core
 {
     [StructLayout(LayoutKind.Sequential)]
-    internal unsafe struct GitRefdbIterator
+    internal struct GitRefdbIterator
     {
         static GitRefdbIterator()
         {
@@ -27,16 +27,16 @@ namespace LibGit2Sharp.Core
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int next_callback(
             out IntPtr referencePtr,
-            IntPtr iterator);
+            IntPtr iteratorPtr);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int next_name_callback(
             [MarshalAs(UnmanagedType.CustomMarshaler, MarshalCookie = UniqueId.UniqueIdentifier, MarshalTypeRef = typeof(StrictUtf8Marshaler))] out string refName,
-            IntPtr iterator);
+            IntPtr iteratorPtr);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void free_callback(
-            IntPtr iterator);
+            IntPtr iteratorPtr);
     }
 
     [StructLayout(LayoutKind.Sequential)]
